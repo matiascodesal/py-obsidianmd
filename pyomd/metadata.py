@@ -301,6 +301,16 @@ class Frontmatter(Metadata):
 
     REGEX = "(?s)(^---\n).*?(\n---\n)"
 
+    def _quote(self, values) -> str:
+        quoted = []
+        for value in values:
+            if isinstance(value, str) and value.startswith("[[") and value.endswith("]]"):
+                value = f'"{value}"'
+            elif isinstance(value, str) and value.startswith("#"):
+                value = f'"{value}"'
+            quoted.append(value)
+        return quoted
+
     def to_string(self) -> str:
         """Render metadata as a string.
 
@@ -311,9 +321,13 @@ class Frontmatter(Metadata):
             return ""
         metadata_repr = ""
         for k, v in self.metadata.items():
-            if len(v) == 1:
+            if len(v) == 0:
+                metadata_repr += f"{k}: \n"
+            elif len(v) == 1:
+                v = self._quote(v)
                 metadata_repr += f"{k}: {v[0]}\n"
             else:
+                v = self._quote(v)
                 metadata_repr += f'{k}: [ {", ".join(v)} ]\n'
         out = "---\n" + metadata_repr + "---\n"
         return out
@@ -362,7 +376,7 @@ class Frontmatter(Metadata):
         for k in meta_dict:
             if meta_dict[k] is None:
                 meta_dict[k] = list()
-
+        
         # make all elements into list of strings
         for k, v in meta_dict.items():
             # print(f'K = "{k}"\nV = "{v}"\ntype(V) = "{type(v)}"')
@@ -371,7 +385,7 @@ class Frontmatter(Metadata):
             elif isinstance(v, list):
                 meta_dict[k] = [str(x) for x in v]
             elif isinstance(v, Number):
-                meta_dict[k] = [str(v)]
+                meta_dict[k] = [v]
             elif isinstance(v, datetime.date):
                 meta_dict[k] = [str(v)]
 
